@@ -1,4 +1,4 @@
-use std::io::{self, IsTerminal, Read};
+use std::io::{self, IsTerminal, Read, Write};
 
 use clap::Parser;
 
@@ -18,6 +18,7 @@ struct Cli {
 #[derive(Debug)]
 pub enum FcbError {
     CannotReadStdin(io::Error),
+    CannotWriteStdout(io::Error),
 }
 
 impl std::fmt::Display for FcbError {
@@ -25,6 +26,9 @@ impl std::fmt::Display for FcbError {
         match self {
             FcbError::CannotReadStdin(err) => {
                 write!(f, "{PROGRAM}: failed to read stdin: {}", err)
+            }
+            FcbError::CannotWriteStdout(err) => {
+                write!(f, "{PROGRAM}: failed to write stdout: {}", err)
             }
         }
     }
@@ -34,22 +38,38 @@ impl std::error::Error for FcbError {}
 
 pub fn run() -> Result<(), FcbError> {
     let cli = Cli::parse();
-    let code = match cli.code {
-        Some(code) => Ok(code),
-        None => read_from_stdin().map_err(FcbError::CannotReadStdin),
+
+    let mut code = match cli.code {
+        Some(code) => Ok(Some(code)),
+        None => read_from_stdin(),
     }?;
 
+    let code_block = fcb::render(&cli.lang, &mut code);
+    write_to_stdout(code_block)
 }
 
-fn read_from_stdin() -> io::Result<String> {
+fn read_from_stdin() -> Result<Option<String>, FcbError> {
     let mut stdin = io::stdin();
 
     if stdin.is_terminal() {
-        return Ok("".to_string());
+        return Ok(None);
     }
 
     let mut buf = String::new();
-    let _ = stdin.read_to_string(&mut buf)?;
-    Ok(buf)
+    let _ = stdin
+        .read_to_string(&mut buf)
+        .map_err(FcbError::CannotReadStdin)?;
+
+    if !buf.is_empty() {
+        Ok(Some(buf))
+    } else {
+        Ok(None)
+    }
 }
 
+fn write_to_stdout(code_block: String) -> Result<(), FcbError> {
+    let mut stdout = io::stdout();
+    stdout
+        .write_all(code_block.as_bytes())
+        .map_err(FcbError::CannotWriteStdout)
+}
