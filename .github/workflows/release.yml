@@ -13,8 +13,11 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
-  release:
+  create_release_artifacts:
     needs: ci
+    outputs:
+      archive_path: ${{ steps.create-archive.outputs.path }}
+      checksum_path: ${{ steps.create-checksum.outputs.path }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
@@ -61,6 +64,12 @@ jobs:
           ./exec create_checksum "$RUST_TARGET" > "$path"
           echo "path=$path" >> "$GITHUB_OUTPUT"
 
+
+  create_release:  
+      runs-on: ubuntu-24.04
+      needs: create_release_artifacts
+
+      steps:
       - name: Create release
         env:
           GIT_TAG: ${{ github.ref_name }}
@@ -76,8 +85,8 @@ jobs:
         env:
           GIT_TAG: ${{ github.ref_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARCHIVE_PATH: ${{ steps.create-archive.outputs.path }}
-          CHECKSUM_PATH: ${{ steps.create-checksum.outputs.path }}
+          ARCHIVE_PATH: ${{ needs.create_release_artifacts.outputs.archive_path }}
+          CHECKSUM_PATH: ${{ needs.create_release_artifacts.outputs.checksum_path }}
         run: |
           gh release upload "$GIT_TAG" \
             "$ARCHIVE_PATH" \
