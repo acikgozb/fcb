@@ -70,6 +70,9 @@ jobs:
       needs: create_release_artifacts
 
       steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Create release
         env:
           GIT_TAG: ${{ github.ref_name }}
