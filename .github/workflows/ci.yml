@@ -16,11 +16,11 @@ jobs:
       - name: Run clippy
         run: |
           ./exec lint
-        shell: /bin/bash
+        shell: bash
 
       - name: Run all tests
         run: |
           ./exec test
-        shell: /bin/bash
+        shell: bash
         env:
           RUST_BACKTRACE: 1
