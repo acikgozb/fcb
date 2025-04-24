@@ -42,6 +42,11 @@ jobs:
           ./exec create_archive "$RUST_TARGET" "$path"
           echo "path=$path" >> "$GITHUB_OUTPUT"
 
+      - name: Install sha256sum for Darwin (coreutils)
+        if: ${{ matrix.runs-on == macos-latest }}
+        run: |
+          brew install coreutils
+
       - name: Create checksum
         id: create-checksum
         env:
