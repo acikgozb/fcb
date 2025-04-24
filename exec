@@ -18,12 +18,12 @@ function create_archive() {
   tar czvf "$archive_path" "./target/$rust_target/release/fcb"
 }
 
-function check_checksum_darwin() {
+function create_checksum_darwin() {
   check_extern_commands "sha256sum"
   sha256sum "./target/$1/release/fcb"
 }
 
-function check_checksum_linux() {
+function create_checksum_linux() {
   check_extern_commands "shasum"
   shasum -a 256 "./target/$1/release/fcb"
 }
