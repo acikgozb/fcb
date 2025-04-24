@@ -1,5 +1,5 @@
 name: "fcb - Release"
-run-name: fcb - Release on {{ github.ref }}
+run-name: fcb - Release on ${{ github.ref }}
 
 on:
   push:
