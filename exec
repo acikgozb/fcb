@@ -7,16 +7,15 @@ program="fcb-exec"
 function create_archive() {
   check_extern_commands "cargo" "tar"
 
-  target_os="$1"
-  program_name="$2"
-  target_dir="./target/$target_os/release"
+  rust_target="$1"
+  archive_path="$2"
 
-  if [ -d "./target/$target_os" ]; then
-      rm -rf "./target/$target_os"
+  if [ -d "./target/$rust_target" ]; then
+      rm -rf "./target/$rust_target"
   fi
 
-  cargo build --release --locked --target "$target_os"
-  tar czvf "$target_dir/$program_name.tar.gz" "$target_dir/fcb"
+  cargo build --release --locked --target "$rust_target"
+  tar czvf "$archive_path" "./target/$rust_target/release/fcb"
 }
 
 function create_checksum() {
@@ -32,10 +31,13 @@ function create_checksum() {
 
   check_extern_commands "cargo" "$sha_cmd"
 
-  target_os="$1"
-  target_dir="./target/$target_os/release"
+  rust_target="$1"
 
-  "$sha_cmd" "${sha_opts[@]}" "$target_dir/fcb"
+  if ! [ -d "./target/$rust_target" ]; then
+    cargo build --release --locked --target "$rust_target"
+  fi 
+
+  "$sha_cmd" "${sha_opts[@]}" "./target/$rust_target/release/fcb"
 }
 
 function lint() {
