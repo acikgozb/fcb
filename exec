@@ -4,6 +4,40 @@ set -euo pipefail
 
 program="fcb-exec"
 
+function create_archive() {
+  check_extern_commands "cargo" "tar"
+
+  target_os="$1"
+  program_name="$2"
+  target_dir="./target/$target_os/release"
+
+  if [ -d "./target/$target_os" ]; then
+      rm -rf "./target/$target_os"
+  fi
+
+  cargo build --release --locked --target "$target_os"
+  tar czvf "$target_dir/$program_name.tar.gz" "$target_dir/fcb"
+}
+
+function create_checksum() {
+  sha_cmd=""
+  sha_opts=()
+
+  if [ "$(uname -s)" == "Darwin" ]; then
+    sha_cmd="sha256sum"
+  else
+    sha_cmd="shasum"
+    sha_opts+=("-a" "256")
+  fi
+
+  check_extern_commands "cargo" "$sha_cmd"
+
+  target_os="$1"
+  target_dir="./target/$target_os/release"
+
+  "$sha_cmd" "${sha_opts[@]}" "$target_dir/fcb"
+}
+
 function lint() {
   check_extern_commands "cargo"
   cargo clippy --no-deps

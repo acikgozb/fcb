@@ -1,8 +1,17 @@
 [package]
 name = "fcb"
 version = "0.1.0"
+authors = ["Berk Acikgoz <acikgozb@proton.me>"]
 edition = "2024"
-description = "Generates fenced code blocks."
+description = "A command line utility for fenced code blocks."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/acikgozb/fcb"
 
 [dependencies]
 clap = { version = "4.5.37", features = ["derive"] }
+
+[profile.release]
+lto = true
+strip = true
+# Size > comp time for this program, hence the codegen flag.
+codegen-units = 1
