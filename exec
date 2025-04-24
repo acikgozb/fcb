@@ -18,18 +18,18 @@ function create_archive() {
   tar czvf "$archive_path" "./target/$rust_target/release/fcb"
 }
 
+function check_checksum_darwin() {
+  check_extern_commands "sha256sum"
+  sha256sum "./target/$1/release/fcb"
+}
+
+function check_checksum_linux() {
+  check_extern_commands "shasum"
+  shasum -a 256 "./target/$1/release/fcb"
+}
+
 function create_checksum() {
-  sha_cmd=""
-  sha_opts=()
-
-  if [ "$(uname -s)" == "Darwin" ]; then
-    sha_cmd="sha256sum"
-  else
-    sha_cmd="shasum"
-    sha_opts+=("-a" "256")
-  fi
-
-  check_extern_commands "cargo" "$sha_cmd"
+  check_extern_commands "cargo"
 
   rust_target="$1"
 
@@ -37,7 +37,11 @@ function create_checksum() {
     cargo build --release --locked --target "$rust_target"
   fi 
 
-  "$sha_cmd" "${sha_opts[@]}" "./target/$rust_target/release/fcb"
+  if [ "$(uname -s)" == "Darwin" ]; then
+    create_checksum_darwin "$rust_target"
+  else
+    create_checksum_linux "$rust_target"
+  fi
 }
 
 function lint() {
