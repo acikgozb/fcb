@@ -1,3 +1,69 @@
+#![warn(missing_docs)]
+//! Generates fenced code blocks.
+
+/// `render` is used to create a String that represents a code block.
+///
+/// `lang`: It is used to decorate the code block to enable syntax highlighting.
+///
+/// `code`: It is used as the code block's content.
+///
+/// # Details
+///
+/// By default, `render` uses empty `&str` for arguments that are `None`.
+///
+/// When `code` is `Some`, then `render` adds a trailing newline to it.
+/// Therefore, users do not need to add a trailing newline to their `code`.
+///
+/// # Examples
+///
+/// With `lang` and `code`:
+///
+/// ```
+/// let mut code = Some("println!(\"Hello world!\");".to_string());
+/// let lang = Some("rust".to_string());
+///
+/// let code_block = fcb::render(&lang, &mut code);
+/// println!("{}", code_block);
+/// // Output:
+/// // ```rust
+/// // println!("Hello world!");
+/// // ```
+/// ```
+///
+/// With `lang` only:
+///
+/// ```
+/// let lang = Some("rust".to_string());
+///
+/// let code_block = fcb::render(&lang, &mut None);
+/// println!("{}", code_block);
+/// // Output:
+/// // ```rust
+/// // ```
+/// ```
+///
+/// With `code` only:
+///
+/// ```
+/// let mut code = Some("println!(\"Hello world!\");".to_string());
+///
+/// let code_block = fcb::render(&None, &mut code);
+/// println!("{}", code_block);
+/// // Output:
+/// // ```
+/// // println!("Hello world!");
+/// // ```
+/// ```
+///
+/// With nothing provided:
+///
+/// ```
+/// let code_block = fcb::render(&None, &mut None);
+/// println!("{}", code_block);
+/// // Output:
+/// // ```
+/// // ```
+/// ```
 pub fn render(lang: &Option<String>, code: &mut Option<String>) -> String {
     let empty = "";
 
