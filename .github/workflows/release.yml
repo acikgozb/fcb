@@ -13,11 +13,27 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
-  create_release_artifacts:
-    needs: ci
-    outputs:
-      archive_path: ${{ steps.create-archive.outputs.path }}
-      checksum_path: ${{ steps.create-checksum.outputs.path }}
+  create_release:  
+      runs-on: ubuntu-24.04
+      needs: ci
+
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create release
+        env:
+          GIT_TAG: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GIT_TAG" \
+           --draft \
+           --title "$GIT_TAG" \
+           --generate-notes
+        shell: bash
+
+  upload_release_artifacts:
+    needs: create_release
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
@@ -42,8 +58,8 @@ jobs:
         env:
           RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          name="fcb-$RUST_TARGET"
-          path="./target/$RUST_TARGET/release/$name.tar.gz"
+          name="fcb-$RUST_TARGET.tar.gz"
+          path="./target/$RUST_TARGET/release/$name"
 
           ./exec create_archive "$RUST_TARGET" "$path"
           echo "path=$path" >> "$GITHUB_OUTPUT"
@@ -58,41 +74,30 @@ jobs:
         env:
           RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          name="fcb-$RUST_TARGET"
-          path="./target/$RUST_TARGET/release/$name.sha256sum"
+          name="fcb-$RUST_TARGET.sha256sum"
+          path="./target/$RUST_TARGET/release/$name"
 
           ./exec create_checksum "$RUST_TARGET" > "$path"
           echo "path=$path" >> "$GITHUB_OUTPUT"
-
-
-  create_release:  
-      runs-on: ubuntu-24.04
-      needs: create_release_artifacts
-
-      steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Create release
-        env:
-          GIT_TAG: ${{ github.ref_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "$GIT_TAG" \
-           --draft \
-           --title "$GIT_TAG" \
-           --generate-notes
-        shell: bash
 
       - name: Upload artifacts to release
         env:
           GIT_TAG: ${{ github.ref_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARCHIVE_PATH: ${{ needs.create_release_artifacts.outputs.archive_path }}
-          CHECKSUM_PATH: ${{ needs.create_release_artifacts.outputs.checksum_path }}
+          ARCHIVE_PATH: ${{ steps.create-archive.outputs.path }}
+          CHECKSUM_PATH: ${{ steps.create-checksum.outputs.path }}
         run: |
           gh release upload "$GIT_TAG" \
             "$ARCHIVE_PATH" \
             "$CHECKSUM_PATH"
         shell: bash
+
+      - name: Rollback release
+        if: failure()
+        env:
+          GIT_TAG: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "$GIT_TAG" -y --cleanup-tag        
+
      
