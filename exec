@@ -15,7 +15,7 @@ function create_archive() {
   fi
 
   cargo build --release --locked --target "$rust_target"
-  tar czvf "$archive_path" "./target/$rust_target/release/fcb"
+  tar -C "./target/$rust_target/release" -czvf "$archive_path" "fcb"
 }
 
 function create_checksum_darwin() {
