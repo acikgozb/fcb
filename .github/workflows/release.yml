@@ -10,27 +10,8 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
-  create-release:
+  release:
     needs: ci
-    runs-on: ubuntu-24.04
-    outputs:
-      artifact_upload_url: ${{ steps.create_release.outputs.upload_url }}
-
-    steps:
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
- 
-
-  publish-release-artifacts:
-    needs: create-release
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
@@ -53,41 +34,45 @@ jobs:
       - name: Create archive
         id: create-archive
         env:
-          target: ${{ matrix.rust_target}}
+          RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          name="fcb-$target"
+          name="fcb-$RUST_TARGET"
+          path="./target/$RUST_TARGET/release/$name.tar.gz"
 
-          ./exec create_archive "$target" "$name"
-
-          echo "name=$name.tar.gz" >> "$GITHUB_OUTPUT"
+          ./exec create_archive "$RUST_TARGET" "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
 
       - name: Create checksum
         id: create-checksum
         env:
-          target: ${{ matrix.rust_target }}
+          RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          # target="x86_64-unknown-linux-gnu"
           name="fcb-$target"
+          path="./target/$RUST_TARGET/release/$name.sha256sum"
 
-          ./exec create_checksum "$target" > "./target/$target/release/$name.sha256sum"
-          echo "name=$name.sha256sum" >> "$GITHUB_OUTPUT"
+          ./exec create_checksum "$RUST_TARGET" > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
 
-      - name: Attach archive to release
-        uses: actions/upload-release-asset@v1.0.2
+      - name: Create release
         env:
+          GIT_TAG: ${{ github.ref_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          target: ${{ matrix.rust_target }}
-          archive_name: ${{ steps.create-archive.output.name }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.artifact_upload_url }}
-          asset_path: "./target/$target/release/$archive_name"
+        run: |
+          gh release create "$GIT_TAG" \
+           --draft \
+           --title "$GIT_TAG" \
+           --generate-notes
+        shell: bash
 
-      - name: Attach checksum to release
-        uses: actions/upload-release-asset@v1.0.2
+      - name: Upload artifacts to release
         env:
+          GIT_TAG: ${{ github.ref_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          target: ${{ matrix.rust_target }}
-          checksum_name: ${{ steps.create-checksum.output.name }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.artifact_upload_url }}
-          asset_path: "./target/$target/release/$checksum_name"
+          ARCHIVE_PATH: ${{ steps.create-archive.outputs.path }}
+          CHECKSUM_PATH: ${{ steps.create-checksum.outputs.path }}
+        run: |
+          gh release upload "$GIT_TAG" \
+            "$ARCHIVE_PATH" \
+            "$CHECKSUM_PATH"
+        shell: bash
+     
