@@ -1,5 +1,5 @@
 name: "fcb - CI"
-run-name: fcb - CI on {{ github.ref }} @{{ github.actor }}
+run-name: fcb - CI on ${{ github.ref }} @${{ github.actor }}
 
 on:
   pull_request:
