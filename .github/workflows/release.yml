@@ -43,7 +43,7 @@ jobs:
           echo "path=$path" >> "$GITHUB_OUTPUT"
 
       - name: Install sha256sum for Darwin (coreutils)
-        if: ${{ matrix.runs-on == macos-latest }}
+        if: matrix.runs-on == 'macos-latest'
         run: |
           brew install coreutils
 
