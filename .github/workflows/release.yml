@@ -55,7 +55,7 @@ jobs:
         env:
           RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          name="fcb-$target"
+          name="fcb-$RUST_TARGET"
           path="./target/$RUST_TARGET/release/$name.sha256sum"
 
           ./exec create_checksum "$RUST_TARGET" > "$path"
