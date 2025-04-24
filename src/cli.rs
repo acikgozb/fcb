@@ -2,8 +2,6 @@ use std::io::{self, IsTerminal, Read, Write};
 
 use clap::Parser;
 
-const PROGRAM: &str = "fcb";
-
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
@@ -23,12 +21,13 @@ pub enum FcbError {
 
 impl std::fmt::Display for FcbError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let program = "fcb";
         match self {
             FcbError::CannotReadStdin(err) => {
-                write!(f, "{PROGRAM}: failed to read stdin: {}", err)
+                write!(f, "{program}: failed to read stdin: {}", err)
             }
             FcbError::CannotWriteStdout(err) => {
-                write!(f, "{PROGRAM}: failed to write stdout: {}", err)
+                write!(f, "{program}: failed to write stdout: {}", err)
             }
         }
     }
