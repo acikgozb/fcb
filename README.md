@@ -81,8 +81,8 @@ fcb -l rust < content.rs > block.txt
 
 Typing out code for a command is not very intuitive:
 
-1 - The code may be several lines long.
-2 - Due to the nature of shell expansion, special characters
+- The code may be several lines long.
+- Due to the nature of shell expansion, special characters
 inside the code may need to be escaped.
 
 Therefore, the main way of using `fcb` is actually through editors like Helix and (Neo)Vim since they allow users to use command line tools for code selections.
