@@ -11,7 +11,7 @@ function create_archive() {
   archive_path="$2"
 
   if [ -d "./target/$rust_target" ]; then
-      rm -rf "./target/$rust_target"
+    rm -rf "./target/$rust_target"
   fi
 
   cargo build --release --locked --target "$rust_target"
@@ -35,7 +35,7 @@ function create_checksum() {
 
   if ! [ -d "./target/$rust_target" ]; then
     cargo build --release --locked --target "$rust_target"
-  fi 
+  fi
 
   if [ "$(uname -s)" == "Darwin" ]; then
     create_checksum_darwin "$rust_target"
@@ -51,18 +51,16 @@ function lint() {
 
 function test() {
   check_extern_commands "cargo"
-  cargo test 
+  cargo test
 }
 
 function check_extern_commands() {
-    for cmd in "${@}"; do
-    if ! which "$cmd" > /dev/null 2>&1; then 
+  for cmd in "${@}"; do
+    if ! which "$cmd" >/dev/null 2>&1; then
       echo "${program}: please install $cmd to proceed." >&2
       exit 1
     fi
-    done
+  done
 }
 
 "$@"
-
-
